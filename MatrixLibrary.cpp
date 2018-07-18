@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "WProgram.h"
 #endif
 
-#include "MatrixLibrary.h"
+#include <MatrixLibrary.h>
 
 Matrix* Matrix::NewMatrix(int rows, int cols)
 {
@@ -39,7 +39,7 @@ Matrix* Matrix::NewMatrix(int rows, int cols, double initialValue)
 	
 	for(int i = 0; i < rows; i++)
 		for(int j = 0; j < cols; j++)
-			SetValueAtLocation(i, j, initialValue);
+			SetValueAt(i, j, initialValue);
 	
 	return this;
 }
@@ -63,11 +63,11 @@ Matrix* Matrix::Eye(int rowCol)
 		{
 			if (rowIndex == columnIndex)
 			{
-				SetValueAtLocation(rowIndex, columnIndex, 1.0f);
+				SetValueAt(rowIndex, columnIndex, 1.0f);
 			}
 			else
 			{
-				SetValueAtLocation(rowIndex, columnIndex, 0.0f);
+				SetValueAt(rowIndex, columnIndex, 0.0f);
 			}
 		}
 	}
@@ -78,8 +78,12 @@ Matrix* Matrix::Random(int rowCol)
 {
 	NewMatrix(rowCol, rowCol);
 	for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
+	{
 		for (int columnIndex = 0; columnIndex < thisCols; columnIndex++)
-			SetValueAtLocation(rowIndex, columnIndex, (rowIndex * 100) + columnIndex);
+		{
+			SetValueAt(rowIndex, columnIndex, (rowIndex * 100) + columnIndex);
+		}
+	}
 			
 	return this;
 }
@@ -88,8 +92,12 @@ void Matrix::Clone(Matrix* matrixToCloneTo)
 {
 	matrixToCloneTo->Zeros(thisRows, thisCols);
 	for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
+	{
         for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
-			matrixToCloneTo->SetValueAtLocation(rowIndex, columnIndex, ItemAt(rowIndex, columnIndex));
+		{
+			matrixToCloneTo->SetValueAt(rowIndex, columnIndex, GetValueAt(rowIndex, columnIndex));
+		}
+	}
 }
 
 
@@ -103,7 +111,7 @@ int Matrix::Columns()
 	return thisCols;
 }
 
-double Matrix::ItemAt(int row, int col)
+double Matrix::GetValueAt(int row, int col)
 {
 	return *(thisMatrix + (row * thisCols) + col);
 }
@@ -123,7 +131,7 @@ void Matrix::Row(double* location, int row)
 	
 	for (int colIndex = 0; colIndex < thisCols; colIndex++)
 	{
-		location[colIndex] = ItemAt(row, colIndex);
+		location[colIndex] = GetValueAt(row, colIndex);
 	}
 }
 
@@ -143,11 +151,11 @@ void Matrix::Column(double* location, int col)
 
     for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
 	{
-		location[rowIndex] = ItemAt(rowIndex, col);
+		location[rowIndex] = GetValueAt(rowIndex, col);
 	}
 }
 
-void Matrix::SetValueAtLocation(int row, int col, double value)
+void Matrix::SetValueAt(int row, int col, double value)
 {
 	*(thisMatrix + (row * thisCols) + col) = value;
 }
@@ -160,8 +168,12 @@ void Matrix::Transpose()
 	Clone(&temp);
 			
     for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
+	{
         for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
-			SetValueAtLocation(rowIndex, columnIndex, temp.ItemAt(columnIndex, rowIndex));
+		{
+			SetValueAt(rowIndex, columnIndex, temp.GetValueAt(columnIndex, rowIndex));
+		}
+	}
 }
 
 // Find the determinant of the current matrix. (Currently only for 2x2)
@@ -170,7 +182,7 @@ double Matrix::Determinant()
     double determinant = 0;
     if((thisRows == thisCols) && (thisRows < 3))
     {
-        determinant = (ItemAt(0, 0) * ItemAt(1, 1)) - (ItemAt(1, 0) * ItemAt(0, 1));
+        determinant = (GetValueAt(0, 0) * GetValueAt(1, 1)) - (GetValueAt(1, 0) * GetValueAt(0, 1));
     }
     else
     {
@@ -182,22 +194,44 @@ double Matrix::Determinant()
 }
 
 
-Matrix* Matrix::Multiply(double value)
+// Perform a mathematical operation on the Matrix
+Matrix* Matrix::Math(Matrix::Operation operation, double value)
 {
 	Matrix* resultantMatrix = this;
 
-    for (int matrix1Row = 0; matrix1Row < thisRows; matrix1Row++)
+    for (int matrixRow = 0; matrixRow < thisRows; matrixRow++)
     {
-        for (int matrix2Column = 0; matrix2Column < thisCols; matrix2Column++)
+        for (int matrixColumn = 0; matrixColumn < thisCols; matrixColumn++)
         {
-            resultantMatrix->SetValueAtLocation(matrix1Row, matrix2Column,  ItemAt(matrix1Row, matrix2Column) * value);
+			switch(operation)
+			{
+				case Matrix::MULTIPLY:
+					resultantMatrix->SetValueAt(
+						matrixRow, matrixColumn, 
+						GetValueAt(matrixRow, matrixColumn) * value);
+					break;
+					
+				case Matrix::ADD:
+					resultantMatrix->SetValueAt(
+						matrixRow, matrixColumn, 
+						GetValueAt(matrixRow, matrixColumn) + value);
+					break;
+					
+				case Matrix::SUBTRACT:
+					resultantMatrix->SetValueAt(
+						matrixRow, matrixColumn, 
+						GetValueAt(matrixRow, matrixColumn) - value);
+					break;
+			}
         }
     }
 
     return resultantMatrix;
 }
 
-Matrix Matrix::Multiply(Matrix* matrix2)
+
+// Perform a mathematical operation on the Matrix
+Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 {
 	int matrix1Rows = Rows();
 	int matrix2Cols = matrix2->Columns();
@@ -211,45 +245,80 @@ Matrix Matrix::Multiply(Matrix* matrix2)
 		return m1;
 	}
 	
-    if (Columns() != matrix2->Rows())
-    {
-        Serial.println("Invalid matrices");
-		Matrix m2;
-		return m2;
-    }
-    else
-    {
-		double vector1[matrix1Rows] = {0};
-		double vector2[matrix2Cols] = {0};
-		
-        for(int matrix1Row = 0; matrix1Row < matrix1Rows; matrix1Row++)
-        {
+	switch(operation)
+	{
+		case Matrix::MULTIPLY:
+			if (Columns() != matrix2->Rows())
+			{
+				Serial.println("Invalid matrices");
+				Matrix m2;
+				return m2;
+			}
+			break;
+			
+		case Matrix::ADD:
+		case Matrix::SUBTRACT:
+			if ((Rows() != matrix2->Rows()) && (Columns() != matrix2->Columns()))
+			{
+				Serial.println("Invalid matrices");
+				Matrix m2;
+				return m2;
+			}
+			break;
+			
+		default:
+			Serial.println("Invalid operation");
+			Matrix m2;
+			return m2;
+	}
+	
+	double vector1[matrix1Rows] = {0};
+	double vector2[matrix2Cols] = {0};
+	
+	for(int matrix1Row = 0; matrix1Row < matrix1Rows; matrix1Row++)
+	{
+		Row(vector1, matrix1Row);
+		for(int matrix2Column = 0; matrix2Column < matrix2Cols; matrix2Column++)
+		{
 			Row(vector1, matrix1Row);
-            for(int matrix2Column = 0; matrix2Column < matrix2Cols; matrix2Column++)
-            {
-				Row(vector1, matrix1Row);
-				matrix2->Column(vector2, matrix2Column);
-
-                if(matrix1Rows != matrix2Cols)
-                {
-                    Serial.println("Vector lengths do not match.");
-					Matrix m3;
-					return m3;
-                }
-
-                double result = 0;
-                for (int i = 0; i < matrix1Rows; i++)
-                {
-                    result += vector1[i] * vector2[i];
-                }
-
-                resultantMatrix.SetValueAtLocation(matrix1Row, matrix2Column, result);
-            }
-        }
-    }
+			matrix2->Column(vector2, matrix2Column);
+			
+			double result = 0.0;
+			switch(operation)
+			{
+				case Matrix::ADD:
+					result = GetValueAt(matrix1Row, matrix2Column);
+					result += matrix2->GetValueAt(matrix1Row, matrix2Column);
+					resultantMatrix.SetValueAt(matrix1Row, matrix2Column, result);
+					break;
+					
+				case Matrix::SUBTRACT:
+					result = GetValueAt(matrix1Row, matrix2Column);
+					result -= matrix2->GetValueAt(matrix1Row, matrix2Column);
+					break;
+					
+				case Matrix::MULTIPLY:
+					if(matrix1Rows != matrix2Cols)
+					{
+						Serial.println("Vector lengths do not match.");
+						Matrix m3;
+						return m3;
+					}
+					
+					for (int i = 0; i < matrix1Rows; i++)
+					{
+						result += vector1[i] * vector2[i];
+					}
+					break;
+			}
+			
+			resultantMatrix.SetValueAt(matrix1Row, matrix2Column, result);
+		}
+	}
 
     return resultantMatrix;
 }
+
 
 void Matrix::PrintMatrix()
 {
@@ -257,7 +326,7 @@ void Matrix::PrintMatrix()
 	{
 		for(int matrixCol = 0; matrixCol < thisCols; matrixCol++)
 		{
-			Serial.print(ItemAt(matrixRow, matrixCol));
+			Serial.print(GetValueAt(matrixRow, matrixCol));
 			Serial.print('\t');
 		}
 		Serial.println();

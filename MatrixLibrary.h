@@ -30,6 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class Matrix
 {
     public:
+	
+	enum Operation
+	{
+		ADD,
+		SUBTRACT,
+		MULTIPLY
+	};
 
 	Matrix* NewMatrix(int rows, int cols);
 	Matrix* NewMatrix(int rows, int cols, double initialValue);
@@ -41,20 +48,16 @@ class Matrix
 	
 	int Rows();
 	int Columns();
-	double ItemAt(int row, int col);
+	double GetValueAt(int row, int col);
 	void Row(double* location, int row);
 	void Column(double* location, int col);
-	void SetValueAtLocation(int row, int col, double value);
+	void SetValueAt(int row, int col, double value);
 	
 	void Transpose();
 	double Determinant();
 	
-	Matrix* Multiply(double value);
-	Matrix Multiply(Matrix* matrix);
-	//Matrix Add(double value);
-	//Matrix Add(Matrix matrix);
-	//Matrix Subtract(double value);
-	//Matrix Subtract(Matrix matrix);
+	Matrix* Math(Operation operation, double value);
+	Matrix Math(Operation operation, Matrix* matrix);
 	
 	void PrintMatrix();
 
