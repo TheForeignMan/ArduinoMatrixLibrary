@@ -1,9 +1,9 @@
 /*
-HMC5883L.cpp - Class file for the HMC5883L Triple Axis Digital Compass Arduino Library.
+MatrixLibrary.cpp - Class file for the Matrix Algebra Library for Arduino.
 
-Version: 1.1.0
-(c) 2014 Korneliusz Jarzebski
-www.jarzebski.pl
+Version: 1.0.0
+(c) 2018 Thomas Bartleet
+www.github.com/TheForeignMan
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the version 3 GNU General Public License as
@@ -26,35 +26,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <MatrixLibrary.h>
 
-Matrix* Matrix::NewMatrix(int rows, int cols)
+Matrix Matrix::NewMatrix(int rows, int cols)
 {
     return NewMatrix(rows, cols, 0.0f);
 }
 
-Matrix* Matrix::NewMatrix(int rows, int cols, double initialValue)
+Matrix Matrix::NewMatrix(int rows, int cols, double initialValue)
 {
     thisMatrix = malloc(rows * cols * sizeof(double));
 	thisRows = rows;
 	thisCols = cols;
 	
 	for(int i = 0; i < rows; i++)
+	{
 		for(int j = 0; j < cols; j++)
+		{
 			SetValueAt(i, j, initialValue);
+		}
+	}
 	
-	return this;
+	return *this;
 }
 
-Matrix* Matrix::Ones(int rows, int cols)
+Matrix Matrix::Ones(int rows, int cols)
 {
     return NewMatrix(rows, cols, 1.0f);
 }
 
-Matrix* Matrix::Zeros(int rows, int cols)
+Matrix Matrix::Zeros(int rows, int cols)
 {
     return NewMatrix(rows, cols, 0.0f);
 }
 
-Matrix* Matrix::Eye(int rowCol)
+Matrix Matrix::Eye(int rowCol)
 {
 	NewMatrix(rowCol, rowCol);
 	for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
@@ -71,10 +75,10 @@ Matrix* Matrix::Eye(int rowCol)
 			}
 		}
 	}
-	return this;
+	return *this;
 }
 
-Matrix* Matrix::Random(int rowCol)
+Matrix Matrix::Random(int rowCol)
 {
 	NewMatrix(rowCol, rowCol);
 	for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
@@ -85,19 +89,22 @@ Matrix* Matrix::Random(int rowCol)
 		}
 	}
 			
-	return this;
+	return *this;
 }
 
-void Matrix::Clone(Matrix* matrixToCloneTo)
+Matrix Matrix::Clone()
 {
-	matrixToCloneTo->Zeros(thisRows, thisCols);
+	Matrix clonedMatrix;
+	clonedMatrix.Zeros(thisRows, thisCols);
 	for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
 	{
         for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
 		{
-			matrixToCloneTo->SetValueAt(rowIndex, columnIndex, GetValueAt(rowIndex, columnIndex));
+			clonedMatrix.SetValueAt(rowIndex, columnIndex, GetValueAt(rowIndex, columnIndex));
 		}
 	}
+	
+	return clonedMatrix;
 }
 
 
@@ -109,11 +116,6 @@ int Matrix::Rows()
 int Matrix::Columns()
 {
 	return thisCols;
-}
-
-double Matrix::GetValueAt(int row, int col)
-{
-	return *(thisMatrix + (row * thisCols) + col);
 }
 
 void Matrix::Row(double* location, int row)
@@ -155,49 +157,39 @@ void Matrix::Column(double* location, int col)
 	}
 }
 
+double Matrix::GetValueAt(int row, int col)
+{
+	return *(thisMatrix + (row * thisCols) + col);
+}
+
 void Matrix::SetValueAt(int row, int col, double value)
 {
 	*(thisMatrix + (row * thisCols) + col) = value;
 }
 
 
-void Matrix::Transpose()
+Matrix Matrix::Transpose()
 {
 	// switch the row/column value around
     Matrix temp;
-	Clone(&temp);
-			
-    for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
+	temp.Zeros(this->Columns(), this->Rows());
+	
+    for(int rowIndex = 0; rowIndex < Rows(); rowIndex++)
 	{
-        for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
+        for(int columnIndex = 0; columnIndex < Columns(); columnIndex++)
 		{
-			SetValueAt(rowIndex, columnIndex, temp.GetValueAt(columnIndex, rowIndex));
+			temp.SetValueAt(columnIndex, rowIndex, GetValueAt(rowIndex, columnIndex));
 		}
 	}
-}
-
-// Find the determinant of the current matrix. (Currently only for 2x2)
-double Matrix::Determinant()
-{
-    double determinant = 0;
-    if((thisRows == thisCols) && (thisRows < 3))
-    {
-        determinant = (GetValueAt(0, 0) * GetValueAt(1, 1)) - (GetValueAt(1, 0) * GetValueAt(0, 1));
-    }
-    else
-    {
-        Serial.println("Cannot find determinant. Matrix needs to be square.");
-		return 0.0f;
-    }
-
-    return determinant;
+	
+	return temp;
 }
 
 
 // Perform a mathematical operation on the Matrix
-Matrix* Matrix::Math(Matrix::Operation operation, double value)
+Matrix Matrix::Math(Matrix::Operation operation, double value)
 {
-	Matrix* resultantMatrix = this;
+	Matrix resultantMatrix = Zeros(this->Rows(), this->Columns());
 
     for (int matrixRow = 0; matrixRow < thisRows; matrixRow++)
     {
@@ -206,19 +198,19 @@ Matrix* Matrix::Math(Matrix::Operation operation, double value)
 			switch(operation)
 			{
 				case Matrix::MULTIPLY:
-					resultantMatrix->SetValueAt(
+					resultantMatrix.SetValueAt(
 						matrixRow, matrixColumn, 
 						GetValueAt(matrixRow, matrixColumn) * value);
 					break;
 					
 				case Matrix::ADD:
-					resultantMatrix->SetValueAt(
+					resultantMatrix.SetValueAt(
 						matrixRow, matrixColumn, 
 						GetValueAt(matrixRow, matrixColumn) + value);
 					break;
 					
 				case Matrix::SUBTRACT:
-					resultantMatrix->SetValueAt(
+					resultantMatrix.SetValueAt(
 						matrixRow, matrixColumn, 
 						GetValueAt(matrixRow, matrixColumn) - value);
 					break;
@@ -317,6 +309,77 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 	}
 
     return resultantMatrix;
+}
+
+
+// Find the determinant of the current matrix.
+double Matrix::FindDeterminant()
+{
+	if (Rows() != Columns())
+	{
+		Serial.println("Determinant: not a square matrix!");
+		return 0.0;
+	}
+	else if ((Rows() == 0) && (Columns() == 0))
+	{
+		return 0.0;
+	}
+	else if((Rows() == 1) && (Columns() == 1))
+	{
+		return GetValueAt(0, 0);
+	}
+	else if((Rows() == 2) && (Columns() == 2))
+	{
+		double a, b, c, d;
+		a = GetValueAt(0, 0);
+		b = GetValueAt(0, 1);
+		c = GetValueAt(1, 0);
+		d = GetValueAt(1, 1);
+		return ((a * d) - (b * c));
+	}
+	
+	// 1. Isolate the first row from the rest of the matrix.
+	//    Example:
+	//    { a b c      { a b c }
+	//      d e f   => { d e f
+	//      g h i }      g h i }
+	// 2. For each column, obtain the surrounding matrix.
+	//    Example:
+	//    { a b c }    { a _ _ }  { _ b _ }  { _ _ c }
+	//    { d e f   => { _ e f    { d _ f    { d e _
+	//      g h i }      _ h i }    g _ i }    g h _ }
+	// 3. For each column, assign a sign (+/-) and calculate
+	//    the determinant of the smaller matrix.
+	//    Example:
+	//            { e f              { d f               { d e
+	//    + a det(  h i } )  - b det(  g i } )  + c det(   g h } )
+
+	int8_t sign = 1;
+	double determinant = 0.0;
+	Matrix isolatedMatrix;
+	isolatedMatrix.Zeros(Rows() - 1, Columns() - 1);
+	for(int column = 0; column < Columns(); column++)
+	{
+		for(int row = 1; row < Rows(); row++)
+		{
+			int elementValue = 0;
+			for(int element = 0; element < Columns(); element++)
+			{
+				if(element == column)
+				{
+					continue;
+			    }
+				
+				isolatedMatrix.SetValueAt(row - 1, elementValue, GetValueAt(row, element));
+				elementValue++;
+				elementValue = elementValue % (Columns() - 1);
+			}
+		}
+		determinant += sign * GetValueAt(0, column) * isolatedMatrix.FindDeterminant();
+		sign = -sign;
+	}
+	
+	return determinant;
 }
 
 

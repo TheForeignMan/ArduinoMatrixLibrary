@@ -1,9 +1,9 @@
 /*
-HMC5883L.h - Header file for the HMC5883L Triple Axis Digital Compass Arduino Library.
+MatrixLibrary.h - Header file for the Matrix Algebra Library for Arduino.
 
-Version: 1.1.0
-(c) 2014 Korneliusz Jarzebski
-www.jarzebski.pl
+Version: 1.0.0
+(c) 2018 Thomas Bartleet
+www.github.com/TheForeignMan
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the version 3 GNU General Public License as
@@ -38,13 +38,13 @@ class Matrix
 		MULTIPLY
 	};
 
-	Matrix* NewMatrix(int rows, int cols);
-	Matrix* NewMatrix(int rows, int cols, double initialValue);
-	Matrix* Ones(int rows, int cols);
-	Matrix* Zeros(int rows, int cols);
-	Matrix* Eye(int rowCol);
-	Matrix* Random(int rowCol);
-	void Clone(Matrix* matrixToCloneTo);
+	Matrix NewMatrix(int rows, int cols);
+	Matrix NewMatrix(int rows, int cols, double initialValue);
+	Matrix Ones(int rows, int cols);
+	Matrix Zeros(int rows, int cols);
+	Matrix Eye(int rowCol);
+	Matrix Random(int rowCol);
+	Matrix Clone();
 	
 	int Rows();
 	int Columns();
@@ -53,11 +53,13 @@ class Matrix
 	void Column(double* location, int col);
 	void SetValueAt(int row, int col, double value);
 	
-	void Transpose();
+	Matrix Transpose();
 	double Determinant();
 	
-	Matrix* Math(Operation operation, double value);
+	Matrix Math(Operation operation, double value);
 	Matrix Math(Operation operation, Matrix* matrix);
+	
+	double FindDeterminant();
 	
 	void PrintMatrix();
 
@@ -65,7 +67,7 @@ class Matrix
 
 	int thisRows;
 	int thisCols;
-	double* thisMatrix;
+	double *thisMatrix;
 };
 
 #endif
