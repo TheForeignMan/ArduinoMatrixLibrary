@@ -1,6 +1,6 @@
 #include <MatrixLibrary.h>
 
-Matrix eye;
+Matrix eye(3, 3);
 
 void setup() {
   // put your setup code here, to run once:
@@ -18,8 +18,7 @@ void setup() {
   eye.PrintMatrix();
 
   Serial.println("myMatrix:");
-  Matrix myMatrix;
-  myMatrix.NewMatrix(3, 3);
+  Matrix myMatrix(3, 3);
   myMatrix.SetValueAt(0,0,1);
   myMatrix.SetValueAt(0,1,2);
   myMatrix.SetValueAt(0,2,3);

@@ -26,6 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <MatrixLibrary.h>
 
+Matrix::Matrix(int rows, int cols)
+{
+	Zeros(rows, cols);
+}
+
 Matrix Matrix::NewMatrix(int rows, int cols)
 {
     return NewMatrix(rows, cols, 0.0f);
@@ -94,8 +99,7 @@ Matrix Matrix::Random(int rowCol)
 
 Matrix Matrix::Clone()
 {
-	Matrix clonedMatrix;
-	clonedMatrix.Zeros(thisRows, thisCols);
+	Matrix clonedMatrix(thisRows, thisCols);
 	for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
 	{
         for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
@@ -171,8 +175,7 @@ void Matrix::SetValueAt(int row, int col, double value)
 Matrix Matrix::Transpose()
 {
 	// switch the row/column value around
-    Matrix temp;
-	temp.Zeros(this->Columns(), this->Rows());
+    Matrix temp(this->Columns(), this->Rows());
 	
     for(int rowIndex = 0; rowIndex < Rows(); rowIndex++)
 	{
@@ -189,7 +192,7 @@ Matrix Matrix::Transpose()
 // Perform a mathematical operation on the Matrix
 Matrix Matrix::Math(Matrix::Operation operation, double value)
 {
-	Matrix resultantMatrix = Zeros(this->Rows(), this->Columns());
+	Matrix resultantMatrix(this->Rows(), this->Columns());
 
     for (int matrixRow = 0; matrixRow < thisRows; matrixRow++)
     {
@@ -227,14 +230,17 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 {
 	int matrix1Rows = Rows();
 	int matrix2Cols = matrix2->Columns();
-    Matrix resultantMatrix;
-	resultantMatrix.NewMatrix(matrix1Rows, matrix2Cols);
+    Matrix resultantMatrix(matrix1Rows, matrix2Cols);
 
 	if(!(matrix1Rows && matrix2Cols))
 	{
 		Serial.println("Row and/or Col are empty");
-		Matrix m1;
-		return m1;
+		return resultantMatrix;
+	}
+	else if(matrix1Rows != matrix2Cols)
+	{
+		Serial.println("Vector lengths do not match.");
+		return resultantMatrix;
 	}
 	
 	switch(operation)
@@ -243,8 +249,7 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 			if (Columns() != matrix2->Rows())
 			{
 				Serial.println("Invalid matrices");
-				Matrix m2;
-				return m2;
+				return resultantMatrix;
 			}
 			break;
 			
@@ -253,15 +258,13 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 			if ((Rows() != matrix2->Rows()) && (Columns() != matrix2->Columns()))
 			{
 				Serial.println("Invalid matrices");
-				Matrix m2;
-				return m2;
+				return resultantMatrix;
 			}
 			break;
 			
 		default:
 			Serial.println("Invalid operation");
-			Matrix m2;
-			return m2;
+			return resultantMatrix;
 	}
 	
 	double vector1[matrix1Rows] = {0};
@@ -290,13 +293,6 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 					break;
 					
 				case Matrix::MULTIPLY:
-					if(matrix1Rows != matrix2Cols)
-					{
-						Serial.println("Vector lengths do not match.");
-						Matrix m3;
-						return m3;
-					}
-					
 					for (int i = 0; i < matrix1Rows; i++)
 					{
 						result += vector1[i] * vector2[i];
@@ -356,8 +352,7 @@ double Matrix::FindDeterminant()
 
 	int8_t sign = 1;
 	double determinant = 0.0;
-	Matrix isolatedMatrix;
-	isolatedMatrix.Zeros(Rows() - 1, Columns() - 1);
+	Matrix isolatedMatrix(Rows() - 1, Columns() - 1);
 	for(int column = 0; column < Columns(); column++)
 	{
 		for(int row = 1; row < Rows(); row++)

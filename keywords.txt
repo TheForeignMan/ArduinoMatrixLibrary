@@ -1,0 +1,23 @@
+Matrix		KEYWORD1
+
+NewMatrix	KEYWORD2
+NewMatrix	KEYWORD2
+Ones		KEYWORD2
+Zeros		KEYWORD2
+Eye		KEYWORD2
+Random		KEYWORD2
+Clone		KEYWORD2
+
+Rows		KEYWORD2
+Columns		KEYWORD2
+GetValueAt	KEYWORD2
+Row		KEYWORD2
+Column		KEYWORD2
+SetValueAt	KEYWORD2
+
+Transpose	KEYWORD2
+FindDeterminant	KEYWORD2
+
+Math		KEYWORD2
+
+PrintMatrix	KEYWORD2

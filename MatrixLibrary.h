@@ -38,6 +38,7 @@ class Matrix
 		MULTIPLY
 	};
 
+	Matrix(int rows, int cols);
 	Matrix NewMatrix(int rows, int cols);
 	Matrix NewMatrix(int rows, int cols, double initialValue);
 	Matrix Ones(int rows, int cols);
