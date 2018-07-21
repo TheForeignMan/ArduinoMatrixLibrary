@@ -1,3 +1,21 @@
+/*
+  BasicMatrixAlgebra
+
+  This example sketch gives a brief overview of the capabilities
+  of the MatrixLibrary.
+
+  Hardware required:
+  - Any Arduino
+
+  Created 19 July 2018
+  By Thomas Bartlet
+  Modified 21 July 2018
+  By Thomas Bartleet
+
+  http://www.github.com/TheForeignMan
+
+*/
+
 #include <MatrixLibrary.h>
 
 Matrix eye(3, 3);
