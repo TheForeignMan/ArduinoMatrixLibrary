@@ -17,7 +17,7 @@ Column		KEYWORD2
 SetValueAt	KEYWORD2
 
 Transpose	KEYWORD2
-FindDeterminant	KEYWORD2
+Determinant	KEYWORD2
 
 Math		KEYWORD2
 

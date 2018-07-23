@@ -38,6 +38,7 @@ class Matrix
 		MULTIPLY
 	};
 
+	Matrix(const Matrix* matrix);
 	Matrix(int rows, int cols);
 	Matrix NewMatrix(int rows, int cols);
 	Matrix NewMatrix(int rows, int cols, double initialValue);
@@ -49,6 +50,8 @@ class Matrix
 	
 	int Rows();
 	int Columns();
+	void RemoveRow(int row);
+	void RemoveColumn(int column);
 	double GetValueAt(int row, int col);
 	void Row(double* location, int row);
 	void Column(double* location, int col);
@@ -56,11 +59,10 @@ class Matrix
 	
 	Matrix Transpose();
 	double Determinant();
+	Matrix Inverse();
 	
 	Matrix Math(Operation operation, double value);
 	Matrix Math(Operation operation, Matrix* matrix);
-	
-	double FindDeterminant();
 	
 	void PrintMatrix();
 

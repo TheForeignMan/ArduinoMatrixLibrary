@@ -26,14 +26,12 @@ void setup() {
   
   Serial.println("eye:");
   eye.Eye(3);
-//  eye.Math(Matrix::MULTIPLY, 3);
+  Matrix eye3 = eye.Math(Matrix::MULTIPLY, 3);
   eye.PrintMatrix();
 
   Serial.println("DET(eye):");
-  Serial.println(eye.FindDeterminant());
+  Serial.println(eye.Determinant());
   Serial.println();
-
-  eye.PrintMatrix();
 
   Serial.println("myMatrix:");
   Matrix myMatrix(3, 3);
@@ -49,7 +47,7 @@ void setup() {
   myMatrix.PrintMatrix();
 
   Serial.println("DET(myMatrix):");
-  Serial.println(myMatrix.FindDeterminant());
+  Serial.println(myMatrix.Determinant());
   Serial.println();
 
   Serial.println("eye * myMatrix:");
@@ -67,10 +65,32 @@ void setup() {
   Serial.println("myMatrix - myMatrix:");
   Matrix subtract2 = myMatrix.Math(Matrix::SUBTRACT, &myMatrix);
   subtract2.PrintMatrix();
+
+  Serial.println("myMatrix + 5:");
+  Matrix addition2 = myMatrix.Math(Matrix::ADD, 5);
+  addition2.PrintMatrix();
   
   Serial.println("myMatrixTranspose:");
   Matrix myMatrixTranspose = myMatrix.Transpose();
   myMatrixTranspose.PrintMatrix();
+
+  Serial.println("myMatrixTranspose without row 1:");
+  myMatrixTranspose.RemoveRow(1);
+  myMatrixTranspose.PrintMatrix();
+
+  Serial.println("myMatrixTranspose without col 1:");
+  myMatrixTranspose.RemoveColumn(1);  
+  myMatrixTranspose.PrintMatrix();
+
+  Serial.println("eye3 Inverse:");
+  Matrix myMatrixInverse = eye3.Inverse();
+  myMatrixInverse.PrintMatrix();
+
+  Serial.println("myMatrix * myMatrixInverse:");
+  Matrix result = eye3.Math(Matrix::MULTIPLY, &myMatrixInverse);
+  result.PrintMatrix();
+  
+  Serial.println("END");
 }
 
 void loop() {

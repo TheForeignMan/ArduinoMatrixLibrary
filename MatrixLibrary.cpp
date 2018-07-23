@@ -26,6 +26,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <MatrixLibrary.h>
 
+Matrix::Matrix(const Matrix* matrix)
+{
+	Zeros(matrix->Rows(), matrix->Columns());
+	for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
+	{
+        for (int columnIndex = 0; columnIndex < thisCols; columnIndex++)
+		{
+			SetValueAt(rowIndex, columnIndex, matrix->GetValueAt(rowIndex, columnIndex));
+		}
+	}
+}
+
 Matrix::Matrix(int rows, int cols)
 {
 	Zeros(rows, cols);
@@ -100,9 +112,9 @@ Matrix Matrix::Random(int rowCol)
 Matrix Matrix::Clone()
 {
 	Matrix clonedMatrix(thisRows, thisCols);
-	for(int rowIndex = 0; rowIndex < thisCols; rowIndex++)
+	for(int rowIndex = 0; rowIndex < thisRows; rowIndex++)
 	{
-        for(int columnIndex = 0; columnIndex < thisRows; columnIndex++)
+        for(int columnIndex = 0; columnIndex < thisCols; columnIndex++)
 		{
 			clonedMatrix.SetValueAt(rowIndex, columnIndex, GetValueAt(rowIndex, columnIndex));
 		}
@@ -161,6 +173,62 @@ void Matrix::Column(double* location, int col)
 	}
 }
 
+void Matrix::RemoveRow(int row)
+{
+	Matrix tempClone = Clone();
+	Zeros(Rows() - 1, Columns());
+	byte hasRowBeenFound = 0;
+	for (int rows = 0; rows < tempClone.Rows(); rows++)
+	{
+		if (rows == row)
+		{
+			hasRowBeenFound = 1;
+		}
+		else
+		{
+			for (int cols = 0; cols < tempClone.Columns(); cols++)
+			{
+				if (hasRowBeenFound == 1)
+				{
+					SetValueAt(rows - 1, cols, tempClone.GetValueAt(rows, cols));
+				}
+				else
+				{
+					SetValueAt(rows, cols, tempClone.GetValueAt(rows, cols));
+				}
+			}
+		}
+	}
+}
+
+void Matrix::RemoveColumn(int column)
+{
+	Matrix tempClone = Clone();
+	Zeros(Rows(), Columns() - 1);
+	byte hasColBeenFound = 0;
+	for (int cols = 0; cols < tempClone.Columns(); cols++)
+	{
+		if (cols == column)
+		{
+			hasColBeenFound = 1;
+		}
+		else
+		{
+			for (int rows = 0; rows < tempClone.Rows(); rows++)
+			{
+				if (hasColBeenFound == 1)
+				{
+					SetValueAt(rows, cols - 1, tempClone.GetValueAt(rows, cols));
+				}
+				else
+				{
+					SetValueAt(rows, cols, tempClone.GetValueAt(rows, cols));
+				}
+			}
+		}
+	}
+}
+
 double Matrix::GetValueAt(int row, int col)
 {
 	return *(thisMatrix + (row * thisCols) + col);
@@ -175,7 +243,7 @@ void Matrix::SetValueAt(int row, int col, double value)
 Matrix Matrix::Transpose()
 {
 	// switch the row/column value around
-    Matrix temp(this->Columns(), this->Rows());
+    Matrix temp(Columns(), Rows());
 	
     for(int rowIndex = 0; rowIndex < Rows(); rowIndex++)
 	{
@@ -192,7 +260,7 @@ Matrix Matrix::Transpose()
 // Perform a mathematical operation on the Matrix
 Matrix Matrix::Math(Matrix::Operation operation, double value)
 {
-	Matrix resultantMatrix(this->Rows(), this->Columns());
+	Matrix resultantMatrix(Rows(), Columns());
 
     for (int matrixRow = 0; matrixRow < thisRows; matrixRow++)
     {
@@ -309,15 +377,20 @@ Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 
 
 // Find the determinant of the current matrix.
-double Matrix::FindDeterminant()
+double Matrix::Determinant()
 {
 	if (Rows() != Columns())
 	{
-		Serial.println("Determinant: not a square matrix!");
+		Serial.flush();
+		Serial.print("Determinant: "); Serial.print(Rows()); Serial.print(", "); 
+		Serial.print(Columns()); Serial.println(". not a square matrix!");
 		return 0.0;
 	}
 	else if ((Rows() == 0) && (Columns() == 0))
 	{
+		Serial.flush();
+		Serial.print("Determinant: "); Serial.print(Rows()); Serial.print(", "); 
+		Serial.print(Columns()); Serial.println(" empty matrix!");
 		return 0.0;
 	}
 	else if((Rows() == 1) && (Columns() == 1))
@@ -370,11 +443,88 @@ double Matrix::FindDeterminant()
 				elementValue = elementValue % (Columns() - 1);
 			}
 		}
-		determinant += sign * GetValueAt(0, column) * isolatedMatrix.FindDeterminant();
+		determinant += sign * GetValueAt(0, column) * isolatedMatrix.Determinant();
 		sign = -sign;
 	}
 	
 	return determinant;
+}
+
+
+// Calculate the inverse of the current matrix using 
+// Minors, Cofactors and Adjugate. This method is used
+// because there seems to be a specific path from input
+// matrix to output matrix, and this can be coded much
+// more easily than the Gauss-Jordan method. Process is
+// explained at 
+// https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
+Matrix Matrix::Inverse()
+{
+	// 1. Calculate the determinant. Get that out of the way first
+	double determinant = Determinant();
+	if ((determinant == 0) ||
+		(Rows() != Columns()))
+	{
+		return Zeros(Rows(), Columns());
+	}
+	
+	// 2. Calculate the Matrix of Minors, and convert to the 
+	// matrix of Cofactors. The procedure is similar to calculating 
+	// the determinant, but there are some differences.
+	Matrix temp(Rows() - 1, Columns() - 1);
+	Matrix minorsCofactors(Rows(), Columns());
+	bool positive = true;
+	for (int column = 0; column < Columns(); column++)
+	{
+		for (int row = 0; row < Rows(); row++)
+		{
+			int rowCount = 0;
+			int rowSet = 0;
+			int colCount = 0;
+			int colSet = 0;
+			while (1)
+			{
+				if ((rowCount != row) && (colCount != column))
+				{
+					temp.SetValueAt(rowSet, colSet, GetValueAt(rowCount, colCount));
+					colSet = (colSet + 1) % temp.Columns();
+					if (colSet == 0)
+					{
+						rowSet = (rowSet + 1) % temp.Rows();
+					}
+				}
+				
+				colCount = (colCount + 1) % Columns();
+				
+				if (colCount == 0)
+				{
+					rowCount = (rowCount + 1) % Rows();
+					if(rowCount == 0)
+					{
+						break;
+					}
+				}
+			}
+			
+			double det = temp.Determinant();
+			if(!positive)
+			{
+				det = det * -1;
+			}
+			minorsCofactors.SetValueAt(row, column, det);
+			
+			// To set the matrix of cofactors
+			positive = !positive;
+		}
+	}
+	
+	// 3. Transpose the matrix of cofactors.
+	Matrix adjunct = minorsCofactors.Transpose();
+	
+	// 4. Multiply by 1/determinant of original matrix
+	Matrix inverse = adjunct.Math(Matrix::MULTIPLY, (1 / determinant));
+	
+	return inverse;
 }
 
 
@@ -391,3 +541,5 @@ void Matrix::PrintMatrix()
 	}
 	Serial.println();
 }
+
+
