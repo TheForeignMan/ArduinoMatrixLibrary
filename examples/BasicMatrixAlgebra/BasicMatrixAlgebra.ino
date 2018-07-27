@@ -16,16 +16,17 @@
 
 */
 
+#define IDENTITY_MATRIX true
+
 #include <MatrixLibrary.h>
 
-Matrix eye(3, 3);
+Matrix eye(3, IDENTITY_MATRIX);
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   
   Serial.println("eye:");
-  eye.Eye(3);
   Matrix eye3 = eye.Math(Matrix::MULTIPLY, 3);
   eye.PrintMatrix();
 
