@@ -39,28 +39,26 @@ class Matrix
 	};
 
 	Matrix(const Matrix* matrix);
-	Matrix(int rows, int cols);
-	Matrix NewMatrix(int rows, int cols);
-	Matrix NewMatrix(int rows, int cols, double initialValue);
+	Matrix(int rows, int cols, double initialValue = 0.0);
+	Matrix(int squareSize, bool isIdentityMatrix = false);
+	
+	Matrix NewMatrix(int rows, int cols, double initialValue = 0.0);
 	Matrix Ones(int rows, int cols);
 	Matrix Zeros(int rows, int cols);
 	Matrix Eye(int rowCol);
-	Matrix Random(int rowCol);
-	Matrix Clone();
 	
 	int Rows();
 	int Columns();
 	void RemoveRow(int row);
 	void RemoveColumn(int column);
 	double GetValueAt(int row, int col);
-	void Row(double* location, int row);
-	void Column(double* location, int col);
+	void Row(double* destination, int row);
+	void Column(double* destination, int col);
 	void SetValueAt(int row, int col, double value);
 	
 	Matrix Transpose();
 	double Determinant();
 	Matrix Inverse();
-	
 	Matrix Math(Operation operation, double value);
 	Matrix Math(Operation operation, Matrix* matrix);
 	

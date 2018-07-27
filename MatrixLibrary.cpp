@@ -26,6 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <MatrixLibrary.h>
 
+///////////////////
+// CONSTRUCTORS
+
+// Copies matrix
 Matrix::Matrix(const Matrix* matrix)
 {
 	Zeros(matrix->Rows(), matrix->Columns());
@@ -38,17 +42,35 @@ Matrix::Matrix(const Matrix* matrix)
 	}
 }
 
-Matrix::Matrix(int rows, int cols)
+
+// Creates a new matrix of size rows x cols. Default contents are 0.0
+Matrix::Matrix(int rows, int cols, double initialValue = 0.0)
 {
-	Zeros(rows, cols);
+	NewMatrix(rows, cols, initialValue);
 }
 
-Matrix Matrix::NewMatrix(int rows, int cols)
+
+// Create a square matrix of size squareSize. If isIdentityMatrix is true,
+// creates an identity matrix of size squareSize.
+Matrix::Matrix(int squareSize, bool isIdentityMatrix = false)
 {
-    return NewMatrix(rows, cols, 0.0f);
+	if(isIdentityMatrix)
+	{
+		Eye(squareSize);
+	}
+	else
+	{
+		Zeros(squareSize, squareSize);
+	}
 }
 
-Matrix Matrix::NewMatrix(int rows, int cols, double initialValue)
+
+///////////////////////////
+// NEW MATRIX FUNCTIONS
+
+// Creates a new matrix of size rows x cols, with default initial value
+// of 0.0
+Matrix Matrix::NewMatrix(int rows, int cols, double initialValue = 0.0)
 {
     thisMatrix = malloc(rows * cols * sizeof(double));
 	thisRows = rows;
@@ -65,16 +87,22 @@ Matrix Matrix::NewMatrix(int rows, int cols, double initialValue)
 	return *this;
 }
 
+
+// Creates a new matrix of size rows x cols, with initial value of 1.0
 Matrix Matrix::Ones(int rows, int cols)
 {
     return NewMatrix(rows, cols, 1.0f);
 }
 
+
+// Creates a new matrix of size rows x cols, with initial value of 0.0
 Matrix Matrix::Zeros(int rows, int cols)
 {
     return NewMatrix(rows, cols, 0.0f);
 }
 
+
+// Creates a new identity matrix of size rowCol. Must be a square matrix.
 Matrix Matrix::Eye(int rowCol)
 {
 	NewMatrix(rowCol, rowCol);
@@ -95,46 +123,26 @@ Matrix Matrix::Eye(int rowCol)
 	return *this;
 }
 
-Matrix Matrix::Random(int rowCol)
-{
-	NewMatrix(rowCol, rowCol);
-	for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
-	{
-		for (int columnIndex = 0; columnIndex < thisCols; columnIndex++)
-		{
-			SetValueAt(rowIndex, columnIndex, (rowIndex * 100) + columnIndex);
-		}
-	}
-			
-	return *this;
-}
 
-Matrix Matrix::Clone()
-{
-	Matrix clonedMatrix(thisRows, thisCols);
-	for(int rowIndex = 0; rowIndex < thisRows; rowIndex++)
-	{
-        for(int columnIndex = 0; columnIndex < thisCols; columnIndex++)
-		{
-			clonedMatrix.SetValueAt(rowIndex, columnIndex, GetValueAt(rowIndex, columnIndex));
-		}
-	}
-	
-	return clonedMatrix;
-}
+/////////////////////////
+// MATRIX INFORMATION
 
-
+// Get the number of rows of the matrix
 int Matrix::Rows()
 {
 	return thisRows;
 }
 
+
+// Get the number of columns of the matrix
 int Matrix::Columns()
 {
 	return thisCols;
 }
 
-void Matrix::Row(double* location, int row)
+
+// Get the contents of a specific row, place in buffer destination.
+void Matrix::Row(double* destination, int row)
 {
 	if(row < 0)
     {
@@ -149,11 +157,13 @@ void Matrix::Row(double* location, int row)
 	
 	for (int colIndex = 0; colIndex < thisCols; colIndex++)
 	{
-		location[colIndex] = GetValueAt(row, colIndex);
+		destination[colIndex] = GetValueAt(row, colIndex);
 	}
 }
 
-void Matrix::Column(double* location, int col)
+
+// Get the contents of a specific column, place in buffer destination.
+void Matrix::Column(double* destination, int col)
 {
 	if(col < 0)
     {
@@ -169,13 +179,15 @@ void Matrix::Column(double* location, int col)
 
     for (int rowIndex = 0; rowIndex < thisRows; rowIndex++)
 	{
-		location[rowIndex] = GetValueAt(rowIndex, col);
+		destination[rowIndex] = GetValueAt(rowIndex, col);
 	}
 }
 
+
+// Remove a specific row in matrix
 void Matrix::RemoveRow(int row)
 {
-	Matrix tempClone = Clone();
+	Matrix tempClone(this);
 	Zeros(Rows() - 1, Columns());
 	byte hasRowBeenFound = 0;
 	for (int rows = 0; rows < tempClone.Rows(); rows++)
@@ -201,9 +213,11 @@ void Matrix::RemoveRow(int row)
 	}
 }
 
+
+// Remove a specific column in matrix
 void Matrix::RemoveColumn(int column)
 {
-	Matrix tempClone = Clone();
+	Matrix tempClone(this);
 	Zeros(Rows(), Columns() - 1);
 	byte hasColBeenFound = 0;
 	for (int cols = 0; cols < tempClone.Columns(); cols++)
@@ -229,17 +243,26 @@ void Matrix::RemoveColumn(int column)
 	}
 }
 
+
+// Get the value at (row, col).
 double Matrix::GetValueAt(int row, int col)
 {
 	return *(thisMatrix + (row * thisCols) + col);
 }
 
+
+// Set the value at (row, col).
 void Matrix::SetValueAt(int row, int col, double value)
 {
 	*(thisMatrix + (row * thisCols) + col) = value;
 }
 
 
+
+///////////////////////
+// MATRIX OPERATIONS
+
+// Transposes the matrix.
 Matrix Matrix::Transpose()
 {
 	// switch the row/column value around
@@ -257,7 +280,7 @@ Matrix Matrix::Transpose()
 }
 
 
-// Perform a mathematical operation on the Matrix
+// Perform a mathematical operation on the Matrix with a value.
 Matrix Matrix::Math(Matrix::Operation operation, double value)
 {
 	Matrix resultantMatrix(Rows(), Columns());
@@ -293,7 +316,7 @@ Matrix Matrix::Math(Matrix::Operation operation, double value)
 }
 
 
-// Perform a mathematical operation on the Matrix
+// Perform a mathematical operation on the Matrix with another matrix
 Matrix Matrix::Math(Matrix::Operation operation, Matrix* matrix2)
 {
 	int matrix1Rows = Rows();
@@ -528,6 +551,10 @@ Matrix Matrix::Inverse()
 }
 
 
+////////////////////////
+// DISPLAY MATRIX
+
+// Print matrix to the main serial port
 void Matrix::PrintMatrix()
 {
 	for(int matrixRow = 0; matrixRow < thisRows; matrixRow++)
